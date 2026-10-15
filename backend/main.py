@@ -2,6 +2,11 @@ import pandas as pd
 from sklearn.linear_model import LinearRegression
 import os
 from fastapi import Body
+import fitz
+from PIL import Image
+import io
+from fastapi import HTTPException
+import numpy as np
 
 import joblib
 from fastapi import FastAPI, UploadFile, File, HTTPException, Depends
@@ -220,9 +225,9 @@ def get_transactions():
     conn = get_db()
     cursor = conn.cursor()
 
+    
     cursor.execute(
-        "SELECT * FROM transactions WHERE user_id = %s ORDER BY date DESC;",
-        (1,)
+        "SELECT * FROM transactions ORDER BY date DESC;"
     )
 
     rows = cursor.fetchall()
@@ -267,23 +272,21 @@ def add_transaction(tx: TransactionCreate = Body(...)):
     cursor = conn.cursor()
 
     cursor.execute("""
-        INSERT INTO transactions
-        (user_id, merchant, category, subcategory, date, amount,
-         payment_method, source, description)
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
-        RETURNING id;
-    """, (
-        1,
-        tx.merchant,
-        tx.category,
-        tx.subcategory,
-        tx.date,
-        tx.amount,
-        tx.method,
-        tx.source,
-        tx.description
-    ))
-
+    INSERT INTO transactions
+    (merchant, category, subcategory, date, amount,
+     payment_method, source, description)
+    VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+    RETURNING id;
+""", (
+    tx.merchant,
+    tx.category,
+    tx.subcategory,
+    tx.date,
+    tx.amount,
+    tx.method,
+    tx.source,
+    tx.description
+))
     new_id = cursor.fetchone()[0]
     conn.commit()
     cursor.close()
@@ -301,9 +304,9 @@ def delete_transaction(transaction_id: int):
     cursor = conn.cursor()
 
     cursor.execute(
-        "DELETE FROM transactions WHERE id = %s AND user_id = %s;",
-        (transaction_id, 1)
-    )
+    "DELETE FROM transactions WHERE id = %s;",
+    (transaction_id,)
+)
 
     deleted = cursor.rowcount
     conn.commit()
@@ -334,7 +337,7 @@ def update_transaction(
             payment_method = %s,
             source = %s,
             description = %s
-        WHERE id = %s AND user_id = %s;
+        WHERE id = %s;
     """, (
         tx.merchant,
         tx.category,
@@ -364,11 +367,14 @@ def dashboard_summary():
     conn = get_db()
     cursor = conn.cursor()
 
+    
     cursor.execute("""
         SELECT COALESCE(SUM(amount), 0)
         FROM transactions
-        WHERE user_id = %s;
-    """, (1,))
+        WHERE date >= DATE_TRUNC('month', CURRENT_DATE)
+          AND date < DATE_TRUNC('month', CURRENT_DATE) + INTERVAL '1 month';
+    """)
+    
     expenses = float(cursor.fetchone()[0])
 
     cursor.execute("""
@@ -439,8 +445,10 @@ def update_profile(profile: ProfileUpdate):
     """, (profile.income, profile.goal, 1))
 
     updated = cursor.rowcount
-    conn.commit()
     cursor.close()
+    conn.close()
+
+    return {"message": "Profile updated successfully"}
 
 
 
@@ -456,57 +464,168 @@ def categorize_sms(request: SMSRequest):
         "category": prediction
     }
 
+
 @app.get("/ml/expense-forecast")
 def expense_forecast():
     conn = get_db()
     cursor = conn.cursor()
 
-    cursor.execute("""
-        SELECT
-            DATE_TRUNC('month', date) AS month,
-            SUM(amount) AS amount
-        FROM transactions
-        GROUP BY DATE_TRUNC('month', date)
-        ORDER BY month
-    """)
+    try:
+        # Overall spending by month
+        cursor.execute("""
+            SELECT
+                DATE_TRUNC('month', date)::date AS month,
+                SUM(amount) AS amount
+            FROM transactions
+            GROUP BY DATE_TRUNC('month', date)
+            ORDER BY month
+        """)
+        monthly_rows = cursor.fetchall()
 
-    rows = cursor.fetchall()
+        # Spending by month and category
+        cursor.execute("""
+            SELECT
+                DATE_TRUNC('month', date)::date AS month,
+                category,
+                SUM(amount) AS amount
+            FROM transactions
+            GROUP BY DATE_TRUNC('month', date), category
+            ORDER BY month
+        """)
+        category_rows = cursor.fetchall()
 
-    cursor.close()
-    conn.close()
+    finally:
+        cursor.close()
+        conn.close()
 
-    if len(rows) < 2:
+    if len(monthly_rows) < 2:
         return {
             "prediction": 0,
+            "forecasts": [],
             "message": "Not enough transaction history"
         }
 
-    amounts = [float(row[1]) for row in rows]
+    # Create a continuous monthly timeline
+    first_month = pd.Timestamp(monthly_rows[0][0])
+    last_month = pd.Timestamp(monthly_rows[-1][0])
 
-    # Simple trend-based ML forecast
-    X = pd.DataFrame(
-        {"month_index": range(1, len(amounts) + 1)}
-    )
-    y = pd.Series(amounts)
+    months = list(pd.date_range(
+        start=first_month,
+        end=last_month,
+        freq="MS"
+    ))
+
+    actual_by_month = {
+        pd.Timestamp(month).to_period("M"): float(amount)
+        for month, amount in monthly_rows
+    }
+
+    actual_amounts = [
+        actual_by_month.get(month.to_period("M"), 0.0)
+        for month in months
+    ]
+
+    # Train overall spending forecast
+    X = pd.DataFrame({
+        "month_index": range(1, len(actual_amounts) + 1)
+    })
+    y = pd.Series(actual_amounts)
 
     model = LinearRegression()
     model.fit(X, y)
 
-    next_index = len(amounts) + 1
+    future_indices = list(
+        range(len(actual_amounts) + 1, len(actual_amounts) + 4)
+    )
 
-    prediction = model.predict(
-        pd.DataFrame(
-            {"month_index": [next_index]}
-        )
-    )[0]
+    overall_predictions = model.predict(
+        pd.DataFrame({"month_index": future_indices})
+    )
 
-    prediction = max(0, prediction)
+    overall_predictions = [
+        round(max(0.0, float(value)), 2)
+        for value in overall_predictions
+    ]
+
+    # Collect category spending for each month
+    category_monthly = {}
+
+    for month, category, amount in category_rows:
+        if not category:
+            continue
+
+        category_name = str(category)
+        month_key = pd.Timestamp(month).to_period("M")
+
+        category_monthly.setdefault(category_name, {})
+        category_monthly[category_name][month_key] = float(amount)
+
+    # Predict each category for the next three months
+    future_months = [
+        months[-1] + pd.DateOffset(months=i)
+        for i in range(1, 4)
+    ]
+
+    forecasts = []
+
+    for i, future_month in enumerate(future_months):
+        category_predictions = {}
+
+        for category_name, monthly_values in category_monthly.items():
+            values = [
+                monthly_values.get(month.to_period("M"), 0.0)
+                for month in months
+            ]
+
+            # Use historical average when there is too little
+            # non-zero history to fit a useful trend.
+            if sum(value > 0 for value in values) < 2:
+                predicted_value = (
+                    sum(values) / len(values) if values else 0.0
+                )
+            else:
+                category_model = LinearRegression()
+                category_X = pd.DataFrame({
+                    "month_index": range(1, len(values) + 1)
+                })
+                category_model.fit(category_X, pd.Series(values))
+
+                predicted_value = category_model.predict(
+                pd.DataFrame({
+                    "month_index": [len(values) + i + 1]
+                })
+            )[0]
+
+            # Prevent a decreasing trend from producing zero forecasts
+            if predicted_value <= 0:
+                non_zero_values = [value for value in values if value > 0]
+                predicted_value = (
+                    sum(non_zero_values) / len(non_zero_values)
+                    if non_zero_values
+                    else 0.0
+                )
+
+            category_predictions[category_name] = round(
+                max(0.0, float(predicted_value)), 2
+            )
+
+        forecasts.append({
+            "month": future_month.strftime("%Y-%m"),
+            "prediction": overall_predictions[i],
+            "categories": category_predictions
+        })
 
     return {
-        "prediction": round(float(prediction), 2),
-        "current": round(amounts[-1], 2),
-        "average": round(sum(amounts) / len(amounts), 2),
-        "months_used": len(amounts)
+        # Keep these fields for the existing frontend
+        "prediction": overall_predictions[0],
+        "current": round(actual_amounts[-1], 2),
+        "average": round(
+            sum(actual_amounts) / len(actual_amounts), 2
+        ),
+        "months_used": len(actual_amounts),
+
+        # New three-month forecast data
+        "forecasts": forecasts
     }
 
 @app.get("/ml/anomalies")
@@ -585,13 +704,28 @@ def detect_recurring():
 async def scan_receipt(file: UploadFile = File(...)):
     image_bytes = await file.read()
 
-    temp_path = "temp_receipt.jpg"
+# Handle PDF receipts and image uploads
+    if file.content_type == "application/pdf" or file.filename.lower().endswith(".pdf"):
+        # Open PDF from uploaded bytes
+        pdf_document = fitz.open(stream=image_bytes, filetype="pdf")
 
-    with open(temp_path, "wb") as f:
-        f.write(image_bytes)
+        if len(pdf_document) == 0:
+            raise HTTPException(status_code=400, detail="The PDF is empty.")
 
-    # OCR
-    results = reader.readtext(temp_path)
+        # Convert the first PDF page into an image
+        page = pdf_document.load_page(0)
+        pix = page.get_pixmap(matrix=fitz.Matrix(2, 2), alpha=False)
+
+        image = Image.open(io.BytesIO(pix.tobytes("png"))).convert("RGB")
+        pdf_document.close()
+
+        # Run OCR on the converted image
+        results = reader.readtext(np.array(image))
+
+    else:
+        # Handle regular image uploads
+        image = Image.open(io.BytesIO(image_bytes)).convert("RGB")
+        results = reader.readtext(np.array(image))
 
     # Keep individual OCR lines
     ocr_lines = [text.strip() for _, text, _ in results if text.strip()]
@@ -600,23 +734,40 @@ async def scan_receipt(file: UploadFile = File(...)):
     # -------------------------
     # Extract amount
     # -------------------------
-    amounts = []
+        # Extract amount, prioritizing the final amount paid
+    # Extract amount, prioritizing the final amount paid
+    # Extract amount, prioritizing the final amount paid
+    amount = 0
 
-    for line in ocr_lines:
-        matches = re.findall(r'(?:₹|Rs\.?|INR)?\s*(\d+(?:[.,]\d{1,2})?)', line, re.IGNORECASE)
+    priority_patterns = [
+        r'\btotal\s+paid\b\s*(?:inr|rs\.?|₹)?\s*([\d,]+(?:\.\d{1,2})?)',
+        r'\bamount\s+paid\b\s*(?:inr|rs\.?|₹)?\s*([\d,]+(?:\.\d{1,2})?)',
+        r'\bgrand\s+total\b\s*(?:inr|rs\.?|₹)?\s*([\d,]+(?:\.\d{1,2})?)',
+        r'\bamount\s+payable\b\s*(?:inr|rs\.?|₹)?\s*([\d,]+(?:\.\d{1,2})?)',
+        r'\bfinal\s+total\b\s*(?:inr|rs\.?|₹)?\s*([\d,]+(?:\.\d{1,2})?)',
+        r'(?<!sub)\btotal\b\s*(?:inr|rs\.?|₹)?\s*([\d,]+(?:\.\d{1,2})?)',
+    ]
 
-        for match in matches:
+    for pattern in priority_patterns:
+        match = re.search(pattern, extracted_text, re.IGNORECASE)
+
+        if match:
             try:
-                value = float(match.replace(",", ""))
-
-                # Ignore very small numbers such as order numbers / SAC codes
-                if value > 20:
-                    amounts.append(value)
+                amount = float(match.group(1).replace(",", ""))
+                break
             except ValueError:
                 pass
 
-    # Usually the largest amount on a receipt is the total
-    amount = max(amounts) if amounts else 0
+    # Fallback: use subtotal only if no final total is found
+    if amount == 0:
+        match = re.search(
+            r'\bsubtotal\b\s*(?:inr|rs\.?|₹)?\s*([\d,]+(?:\.\d{1,2})?)',
+            extracted_text,
+            re.IGNORECASE
+        )
+
+        if match:
+            amount = float(match.group(1).replace(",", ""))
 
     # -------------------------
     # Extract date
@@ -640,21 +791,87 @@ async def scan_receipt(file: UploadFile = File(...)):
         if date:
             break
 
-    # -------------------------
+  
     # Extract merchant
-    # -------------------------
-    merchant = ocr_lines[0] if ocr_lines else "Unknown Merchant"
+    merchant = "Unknown Merchant"
 
+    ignored_words = [
+        "phonepe",
+        "google pay",
+        "gpay",
+        "paytm",
+        "payment successful",
+        "transaction successful",
+        "receipt",
+        "invoice",
+        "paid successfully",
+        "order details"
+    ]
+
+    for line in ocr_lines[:8]:
+        cleaned_line = line.strip()
+        lower_line = cleaned_line.lower()
+
+        # Skip empty lines and common payment app or receipt headings
+        if not cleaned_line:
+            continue
+
+        if any(word in lower_line for word in ignored_words):
+            continue
+
+        # Skip lines that mostly contain numbers
+        if sum(char.isdigit() for char in cleaned_line) > len(cleaned_line) / 2:
+            continue
+
+        merchant = cleaned_line
+        break
+    # Construct a transaction-style message
+    transaction_message = (
+        f"Payment to {merchant}. "
+        f"Amount INR {amount}. "
+        f"Transaction details: {extracted_text}"
+    )
     # -------------------------
     # ML category prediction
     # -------------------------
-    category = expense_model.predict([extracted_text])[0]
+    category = expense_model.predict([transaction_message])[0]
+   
+# Predict category using the trained ML model
+    category = expense_model.predict([transaction_message])[0]
 
-    # Remove temporary image
-    os.remove(temp_path)
+    receipt_text_lower = extracted_text.lower()
+
+    # Use a category only when the receipt gives a clear indication.
+    # Otherwise, classify the purchase as shopping.
+    receipt_category_keywords = {
+        "food": ["restaurant", "food order", "swiggy", "zomato"],
+        "grocery": ["supermarket", "grocery store", "groceries"],
+        "transport": ["fuel station", "petrol pump", "uber", "ola"],
+        "travel": ["flight ticket", "hotel booking", "travel booking"],
+        "bills": ["electricity bill", "water bill", "internet bill"],
+        "entertainment": ["movie ticket", "cinema", "concert"],
+        "healthcare": ["pharmacy", "medical store", "hospital"],
+    }
+
+    matched_category = next(
+        (
+            candidate
+            for candidate, keywords in receipt_category_keywords.items()
+            if any(keyword in receipt_text_lower for keyword in keywords)
+        ),
+        None
+    )
+
+    if matched_category:
+        category = matched_category
+    elif category in ("investment", "transfer", "cashback", "refund", "emi"):
+        category = "shopping"
+
+    #os.remove(temp_path)
 
     return {
         "text": extracted_text,
+        "transaction_message": transaction_message,
         "merchant": merchant,
         "amount": amount,
         "date": date,
@@ -670,10 +887,9 @@ def get_category_spending():
     cursor.execute("""
         SELECT category, SUM(amount)
         FROM transactions
-        WHERE user_id = %s
         GROUP BY category
         ORDER BY SUM(amount) DESC;
-    """, (1,))
+    """)
 
     rows = cursor.fetchall()
     cursor.close()
@@ -685,6 +901,7 @@ def get_category_spending():
     ]
 
 
+
 @app.get("/dashboard/monthly-spending")
 def get_monthly_spending():
     conn = get_db()
@@ -694,10 +911,10 @@ def get_monthly_spending():
         SELECT TO_CHAR(DATE_TRUNC('month', date), 'YYYY-MM') AS month,
                SUM(amount)
         FROM transactions
-        WHERE user_id = %s
+        
         GROUP BY DATE_TRUNC('month', date)
         ORDER BY DATE_TRUNC('month', date);
-    """, (1,))
+    """)
 
     rows = cursor.fetchall()
     cursor.close()
@@ -714,10 +931,10 @@ def get_income_expenses():
     cursor = conn.cursor()
 
     cursor.execute("""
-        SELECT income
-        FROM user_profile
-        WHERE user_id = %s;
-    """, (1,))
+    SELECT income
+    FROM user_profile
+    WHERE user_id = %s;
+""", (1,))
     profile = cursor.fetchone()
     income = float(profile[0]) if profile else 0.0
 
@@ -725,10 +942,10 @@ def get_income_expenses():
         SELECT TO_CHAR(DATE_TRUNC('month', date), 'YYYY-MM'),
                SUM(amount)
         FROM transactions
-        WHERE user_id = %s
+        
         GROUP BY DATE_TRUNC('month', date)
         ORDER BY DATE_TRUNC('month', date);
-    """, (1,))
+    """)
 
     rows = cursor.fetchall()
     cursor.close()
@@ -744,4 +961,87 @@ def get_income_expenses():
     ]
 
 
+@app.get("/debug/health-spending")
+def debug_health_spending():
+    conn = get_db()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT
+            DATE_TRUNC('month', date)::date AS month,
+            category,
+            SUM(amount) AS amount
+        FROM transactions
+        WHERE LOWER(category) LIKE '%health%'
+        GROUP BY DATE_TRUNC('month', date), category
+        ORDER BY month
+    """)
+
+    rows = cursor.fetchall()
+    cursor.close()
+    conn.close()
+
+    return [
+        {
+            "month": str(row[0]),
+            "category": row[1],
+            "amount": float(row[2])
+        }
+        for row in rows
+    ]
+
+
+@app.get("/ml/expense-forecast-test")
+def expense_forecast_test():
+    conn = get_db()
+    cursor = conn.cursor()
+
+    try:
+        cursor.execute("""
+            SELECT
+                DATE_TRUNC('month', date)::date AS month,
+                SUM(amount) AS amount
+            FROM transactions
+            GROUP BY DATE_TRUNC('month', date)
+            ORDER BY month
+        """)
+        rows = cursor.fetchall()
+    finally:
+        cursor.close()
+        conn.close()
+
+    if len(rows) < 4:
+        return {"message": "Not enough monthly history to test"}
+
+    amounts = [float(row[1]) for row in rows]
+
+    # Train on every month except the last one.
+    train = amounts[:-1]
+    actual = amounts[-1]
+
+    X_train = pd.DataFrame({
+        "month_index": range(1, len(train) + 1)
+    })
+    y_train = pd.Series(train)
+
+    model = LinearRegression()
+    model.fit(X_train, y_train)
+
+    predicted = float(model.predict(
+        pd.DataFrame({"month_index": [len(train) + 1]})
+    )[0])
+
+    predicted = max(0.0, predicted)
+    error = abs(actual - predicted)
+
+    return {
+        "tested_month": rows[-1][0].strftime("%Y-%m"),
+        "months_used_for_training": len(train),
+        "actual_spending": round(actual, 2),
+        "predicted_spending": round(predicted, 2),
+        "absolute_error": round(error, 2),
+        "absolute_percentage_error": round(
+            error / actual * 100, 2
+        ) if actual else None
+    }
 

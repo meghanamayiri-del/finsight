@@ -4,7 +4,7 @@ import Button from '../common/Button.jsx'
 import { useApp } from '../../context/AppContext.jsx'
 import { categories, paymentMethods } from '../../data/mockData.js'
 
-const today = '2026-10-07'
+const today = new Date().toLocaleDateString('en-CA')
 const field = 'w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-800 placeholder:text-slate-400'
 const Label = ({ children }) => <label className="block text-xs font-medium text-slate-600 mb-1.5">{children}</label>
 
@@ -99,12 +99,18 @@ function ReceiptFlow({ onDone }) {
       setAmount(data.amount ? String(data.amount) : '')
       setConfirmAmount(false)
 
-      if (data.category && categories[data.category]) {
+      
+      const categoryKey = Object.keys(categories).find(
+        key => key.toLowerCase() === data.category?.toLowerCase()
+      )
+
+      if (categoryKey && categories[categoryKey]?.length) {
         setCat({
-          category: data.category,
-          sub: categories[data.category][0],
+          category: categoryKey,
+          sub: categories[categoryKey][0],
         })
       }
+
 
       setStage('review')
     } catch (err) {

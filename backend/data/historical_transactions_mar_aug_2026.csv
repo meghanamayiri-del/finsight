@@ -1,0 +1,73 @@
+merchant,category,subcategory,date,amount,payment_method,source,description
+Hospital,Health,Doctor/Hospital,2026-03-03,2539.39,Cash,Receipt,Doctor/Hospital expense at Hospital
+DMart,Food,Groceries,2026-03-03,2206.26,Net Banking,Manual,Groceries expense at DMart
+TSRTC,Travel & Transport,Bus/Train,2026-03-04,749.30,Debit Card,Manual,Bus/Train expense at TSRTC
+McDonald's,Food,Junk Food,2026-03-04,327.96,Credit Card,Receipt,Junk Food expense at McDonald's
+PVR Cinemas,Entertainment,Movies,2026-03-08,649.00,Cash,Manual,Movies expense at PVR Cinemas
+Amazon,Shopping,Online Shopping,2026-03-09,2608.11,Cash,Manual,Online Shopping expense at Amazon
+Medical Store,Health,Medicine,2026-03-19,990.37,UPI,Manual,Medicine expense at Medical Store
+Restaurant,Food,Restaurants,2026-03-19,1342.09,UPI,Manual,Restaurants expense at Restaurant
+Water Board,Bills & Utilities,Water,2026-03-22,415.72,UPI,Manual,Water expense at Water Board
+Gaming Store,Entertainment,Games,2026-03-23,609.34,Debit Card,Manual,Games expense at Gaming Store
+Cafe Coffee Day,Food,Cafe,2026-03-23,404.57,Debit Card,Manual,Cafe expense at Cafe Coffee Day
+Indian Railways,Travel & Transport,Bus/Train,2026-03-27,187.77,Credit Card,Manual,Bus/Train expense at Indian Railways
+Spotify,Entertainment,Streaming,2026-04-06,396.03,Cash,Manual,Streaming expense at Spotify
+Gym,Health,Fitness,2026-04-06,504.87,Credit Card,Receipt,Fitness expense at Gym
+Domino's,Food,Junk Food,2026-04-07,337.38,Net Banking,Manual,Junk Food expense at Domino's
+Amazon Books,Education,Books,2026-04-08,1395.22,Net Banking,Receipt,Books expense at Amazon Books
+Clinic,Health,Doctor/Hospital,2026-04-09,869.65,Cash,Receipt,Doctor/Hospital expense at Clinic
+Personal Care Store,Other,Personal Care,2026-04-09,712.26,UPI,Manual,Personal Care expense at Personal Care Store
+Clinic,Health,Doctor/Hospital,2026-04-12,2992.78,Debit Card,Manual,Doctor/Hospital expense at Clinic
+Uber,Travel & Transport,Cab,2026-04-14,318.56,Cash,Receipt,Cab expense at Uber
+Steam,Entertainment,Games,2026-04-17,1325.20,Credit Card,Receipt,Games expense at Steam
+Jio,Bills & Utilities,Mobile,2026-04-25,888.88,Debit Card,Manual,Mobile expense at Jio
+Myntra,Shopping,Clothing,2026-04-25,2398.36,Credit Card,Manual,Clothing expense at Myntra
+McDonald's,Food,Junk Food,2026-04-27,237.43,UPI,Receipt,Junk Food expense at McDonald's
+Airtel,Bills & Utilities,Mobile,2026-05-03,852.82,Cash,Manual,Mobile expense at Airtel
+Gift Shop,Other,Gifts,2026-05-07,1891.38,Cash,Manual,Gifts expense at Gift Shop
+Netflix,Entertainment,Streaming,2026-05-08,369.09,Cash,Manual,Streaming expense at Netflix
+Electronics Store,Shopping,Electronics,2026-05-08,890.46,UPI,Manual,Electronics expense at Electronics Store
+Amazon,Shopping,Online Shopping,2026-05-14,3265.41,Debit Card,Manual,Online Shopping expense at Amazon
+Personal Care Store,Other,Personal Care,2026-05-20,237.56,Debit Card,Manual,Personal Care expense at Personal Care Store
+Amazon Books,Education,Books,2026-05-22,1714.96,Debit Card,Manual,Books expense at Amazon Books
+Hospital,Health,Doctor/Hospital,2026-05-22,1482.87,Cash,Manual,Doctor/Hospital expense at Hospital
+Spotify,Entertainment,Streaming,2026-05-26,674.68,Debit Card,Manual,Streaming expense at Spotify
+Airtel Broadband,Bills & Utilities,Internet,2026-05-28,549.60,Debit Card,Manual,Internet expense at Airtel Broadband
+Food Court,Food,Restaurants,2026-05-29,621.15,Debit Card,Receipt,Restaurants expense at Food Court
+Personal Care Store,Other,Personal Care,2026-05-30,639.05,Net Banking,Manual,Personal Care expense at Personal Care Store
+Myntra,Shopping,Clothing,2026-06-02,548.63,Cash,Manual,Clothing expense at Myntra
+Clothing Store,Shopping,Clothing,2026-06-04,2095.58,Cash,Receipt,Clothing expense at Clothing Store
+Gift Shop,Other,Gifts,2026-06-05,952.76,UPI,Manual,Gifts expense at Gift Shop
+Personal Care Store,Other,Personal Care,2026-06-06,964.70,UPI,Receipt,Personal Care expense at Personal Care Store
+Water Board,Bills & Utilities,Water,2026-06-08,235.59,Net Banking,Manual,Water expense at Water Board
+Gaming Store,Entertainment,Games,2026-06-09,487.24,UPI,Manual,Games expense at Gaming Store
+Ola,Travel & Transport,Cab,2026-06-14,342.62,Net Banking,Receipt,Cab expense at Ola
+Jio,Bills & Utilities,Mobile,2026-06-20,740.17,Debit Card,Manual,Mobile expense at Jio
+ACT Fibernet,Bills & Utilities,Internet,2026-06-22,542.43,Credit Card,Receipt,Internet expense at ACT Fibernet
+Clinic,Health,Doctor/Hospital,2026-06-29,744.52,UPI,Receipt,Doctor/Hospital expense at Clinic
+Jio,Bills & Utilities,Mobile,2026-06-30,333.05,Net Banking,Manual,Mobile expense at Jio
+Local Cafe,Food,Cafe,2026-06-30,242.62,Cash,Manual,Cafe expense at Local Cafe
+Airtel,Bills & Utilities,Mobile,2026-07-01,696.93,Cash,Receipt,Mobile expense at Airtel
+Airtel Broadband,Bills & Utilities,Internet,2026-07-03,1080.54,UPI,Manual,Internet expense at Airtel Broadband
+Domino's,Food,Junk Food,2026-07-07,403.25,Credit Card,Receipt,Junk Food expense at Domino's
+Electronics Store,Shopping,Electronics,2026-07-08,3906.60,Net Banking,Manual,Electronics expense at Electronics Store
+Domino's,Food,Junk Food,2026-07-08,337.47,Credit Card,Manual,Junk Food expense at Domino's
+Clothing Store,Shopping,Clothing,2026-07-10,2841.22,Debit Card,Manual,Clothing expense at Clothing Store
+Electronics Store,Shopping,Electronics,2026-07-17,5640.88,Debit Card,Manual,Electronics expense at Electronics Store
+Jio,Bills & Utilities,Mobile,2026-07-18,604.71,Debit Card,Receipt,Mobile expense at Jio
+Amazon Books,Education,Books,2026-07-21,458.53,Net Banking,Manual,Books expense at Amazon Books
+Myntra,Shopping,Clothing,2026-07-23,1990.36,Cash,Manual,Clothing expense at Myntra
+Water Board,Bills & Utilities,Water,2026-07-24,272.56,Cash,Manual,Water expense at Water Board
+Jio,Bills & Utilities,Mobile,2026-07-29,495.62,Debit Card,Manual,Mobile expense at Jio
+Cafe Coffee Day,Food,Cafe,2026-08-02,398.29,Credit Card,Manual,Cafe expense at Cafe Coffee Day
+Electricity Board,Bills & Utilities,Electricity,2026-08-06,2064.77,Net Banking,Receipt,Electricity expense at Electricity Board
+Netflix,Entertainment,Streaming,2026-08-08,578.68,Net Banking,Manual,Streaming expense at Netflix
+Netflix,Entertainment,Streaming,2026-08-09,661.58,UPI,Manual,Streaming expense at Netflix
+Clothing Store,Shopping,Clothing,2026-08-11,699.89,Credit Card,Manual,Clothing expense at Clothing Store
+Gym,Health,Fitness,2026-08-18,667.81,Debit Card,Manual,Fitness expense at Gym
+Restaurant,Food,Restaurants,2026-08-19,916.17,UPI,Manual,Restaurants expense at Restaurant
+Food Court,Food,Restaurants,2026-08-25,1759.45,Debit Card,Receipt,Restaurants expense at Food Court
+Netflix,Entertainment,Streaming,2026-08-28,784.51,Debit Card,Receipt,Streaming expense at Netflix
+Airtel Broadband,Bills & Utilities,Internet,2026-08-28,655.70,Net Banking,Manual,Internet expense at Airtel Broadband
+Airtel Broadband,Bills & Utilities,Internet,2026-08-29,647.05,Debit Card,Manual,Internet expense at Airtel Broadband
+Airtel,Bills & Utilities,Mobile,2026-08-31,480.92,Cash,Manual,Mobile expense at Airtel

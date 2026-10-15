@@ -1,0 +1,73 @@
+import csv
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+from main import get_db
+
+csv_path = Path(__file__).parent / "historical_transactions_mar_aug_2026.csv"
+
+with csv_path.open(newline="", encoding="utf-8") as file:
+    rows = list(csv.DictReader(file))
+
+if len(rows) != 72:
+    raise ValueError(f"Expected 72 rows, found {len(rows)}. Import cancelled.")
+
+expected_columns = {
+    "merchant", "category", "subcategory", "date",
+    "amount", "payment_method", "source", "description"
+}
+
+if not rows or set(rows[0].keys()) != expected_columns:
+    raise ValueError("CSV columns don't match the expected schema. Import cancelled.")
+
+if any(not ("2026-03-01" <= row["date"] <= "2026-08-31") for row in rows):
+    raise ValueError("A transaction date is outside March–August 2026. Import cancelled.")
+
+conn = get_db()
+
+try:
+    with conn.cursor() as cursor:
+        # Prevent duplicate imports if this script is run more than once.
+        cursor.execute("""
+            SELECT COUNT(*)
+            FROM transactions
+            WHERE date >= %s AND date <= %s
+        """, ("2026-03-01", "2026-08-31"))
+
+        existing_count = cursor.fetchone()[0]
+
+        if existing_count:
+            raise RuntimeError(
+                f"Found {existing_count} existing transactions in March–August 2026. "
+                "Import cancelled to prevent duplicates."
+            )
+
+        cursor.executemany("""
+            INSERT INTO transactions
+                (merchant, category, subcategory, date, amount,
+                 payment_method, source, description)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+        """, [
+            (
+                row["merchant"],
+                row["category"],
+                row["subcategory"],
+                row["date"],
+                float(row["amount"]),
+                row["payment_method"],
+                row["source"],
+                row["description"],
+            )
+            for row in rows
+        ])
+
+    conn.commit()
+    print(f"Success! Imported {len(rows)} historical transactions.")
+
+except Exception:
+    conn.rollback()
+    raise
+
+finally:
+    conn.close()
