@@ -186,9 +186,16 @@ def login(request: LoginRequest):
     }
 
 def get_db():
+    database_url = os.getenv("DATABASE_URL")
+
+    if database_url:
+        return psycopg2.connect(database_url)
+
     return psycopg2.connect(
         dbname="finsight",
-        user="postgres"
+        user="postgres",
+        host="localhost",
+        port=5432
     )
 
 class Transaction(BaseModel):
