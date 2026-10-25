@@ -13,7 +13,6 @@ from fastapi import FastAPI, UploadFile, File, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import psycopg2
-import easyocr
 import re
 from pwdlib import PasswordHash
 from jose import jwt
@@ -28,11 +27,7 @@ expense_model = joblib.load(MODEL_PATH)
 reader = None
 
 
-def get_ocr_reader():
-    global reader
-    if reader is None:
-        reader = easyocr.Reader(['en'], gpu=False)
-    return reader
+
 
 app = FastAPI(title="FinSight API")
 app.add_middleware(
