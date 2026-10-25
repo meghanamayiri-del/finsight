@@ -1,10 +1,6 @@
 
 # FinSight — Smart Expense Tracker & AI Financial Advisor
 
-A full-stack expense tracking application that helps users record expenses, analyze spending patterns, view category-wise breakdowns, forecast future expenses, and receive personalized financial insights.
-
-# FinSight — Smart Expense Tracker & AI Financial Advisor
-
 FinSight is a personal finance application designed to help users record transactions, understand spending patterns, and explore expense predictions. It combines a web-based interface, a Python API, a PostgreSQL database, and machine-learning components for expense categorization and forecasting.
 
 > **Documentation note:** This README is a project overview prepared from the information currently available. Verify feature completeness, dataset roles, exact API routes, and evaluation results against the latest code before treating every detail as final.
