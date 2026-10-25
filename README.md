@@ -339,10 +339,6 @@ Here is a look at the implemented features:
 ### Transactions
 ![Transactions view](docs/screenshots/transactions.png)
 
-## Academic documentation note
-
-For the college case study, use the college's required nine chapters and include both ML and FSD content. This README is an overview, not a replacement for the formal report. Before submission, confirm dataset statistics, model metrics, actual API routes, implementation status, and references against the final project files.
-
 
 #(personal Use)
 
