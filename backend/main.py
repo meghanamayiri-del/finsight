@@ -25,7 +25,14 @@ MODEL_PATH = os.path.join(
 )
 
 expense_model = joblib.load(MODEL_PATH)
-reader = easyocr.Reader(['en'], gpu=False)
+reader = None
+
+
+def get_ocr_reader():
+    global reader
+    if reader is None:
+        reader = easyocr.Reader(['en'], gpu=False)
+    return reader
 
 app = FastAPI(title="FinSight API")
 app.add_middleware(
@@ -727,12 +734,13 @@ async def scan_receipt(file: UploadFile = File(...)):
         pdf_document.close()
 
         # Run OCR on the converted image
-        results = reader.readtext(np.array(image))
+        # Run OCR on the converted image
+        results = get_ocr_reader().readtext(np.array(image))
 
     else:
-        # Handle regular image uploads
+            # Handle regular image uploads
         image = Image.open(io.BytesIO(image_bytes)).convert("RGB")
-        results = reader.readtext(np.array(image))
+        results = get_ocr_reader().readtext(np.array(image))
 
     # Keep individual OCR lines
     ocr_lines = [text.strip() for _, text, _ in results if text.strip()]
