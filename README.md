@@ -321,14 +321,27 @@ Add screenshots captured from the actual running application. Suggested order:
 6. Simulator — only if the feature is implemented and demonstrable.
 
 Use relative paths in this repository, for example:
+## Application Preview
 
-```markdown
-![FinSight dashboard](docs/screenshots/dashboard.png)
-```
+Here is a look at the implemented features:
 
-Create `docs/screenshots/` and save the actual screenshots there. Use meaningful captions and do not substitute mockups for screenshots of the implemented application.
+### Main Dashboard
+![Dashboard overview](docs/screenshots/Dashboard.png)
 
----
+### Insights & Analytics
+![Insights view](docs/screenshots/insights.png)
+
+### Predictions
+![Predictions view](docs/screenshots/predictions.png)
+
+### Receipt Scanner
+![Receipt scanner view](docs/screenshots/receipt.png)
+
+### Financial Simulator
+![Simulator view](docs/screenshots/simulator.png)
+
+### Transactions
+![Transactions view](docs/screenshots/transactions.png)
 
 ## Academic documentation note
 
