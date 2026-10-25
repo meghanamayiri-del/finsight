@@ -1,0 +1,14 @@
+fastapi
+uvicorn[standard]
+PyMuPDF
+Pillow
+easyocr
+numpy
+pandas
+scikit-learn
+joblib
+psycopg2-binary
+python-multipart
+pwdlib[argon2]
+python-jose
+python-dotenv
