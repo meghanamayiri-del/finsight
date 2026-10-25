@@ -83,7 +83,7 @@ function ReceiptFlow({ onDone }) {
       const formData = new FormData()
       formData.append('file', selectedFile)
 
-      const response = await fetch('http://127.0.0.1:8000/receipts/scan', {
+      const response = await fetch('https://finsight-1-j99y.onrender.com/receipts/scan', {
         method: 'POST',
         body: formData,
       })

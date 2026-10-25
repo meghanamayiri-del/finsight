@@ -30,7 +30,7 @@ export default function Transactions() {
   setAiCategory('')
 
   try {
-    const response = await fetch('http://127.0.0.1:8000/ml/categorize', {
+    const response = await fetch('https://finsight-1-j99y.onrender.com/ml/categorize', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

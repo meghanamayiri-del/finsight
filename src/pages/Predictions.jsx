@@ -17,14 +17,14 @@ export default function Predictions() {
   const [selectedMonth, setSelectedMonth] = useState('')
 
   useEffect(() => {
-  fetch('http://127.0.0.1:8000/ml/expense-forecast')
+  fetch('https://finsight-1-j99y.onrender.com/ml/expense-forecast')
     .then((res) => res.json())
     .then((data) => setForecast(data))
     .catch((error) => console.error('Forecast failed:', error))
 }, [])
 
 useEffect(() => {
-  fetch('http://127.0.0.1:8000/dashboard/monthly-spending')
+  fetch('https://finsight-1-j99y.onrender.com/dashboard/monthly-spending')
     .then((res) => res.json())
     .then((data) => setMonthlySpending(data))
     .catch((error) =>

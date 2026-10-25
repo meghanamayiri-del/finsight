@@ -10,7 +10,7 @@ import {
 const Ctx = createContext(null)
 export const useApp = () => useContext(Ctx)
 
-const API = 'http://127.0.0.1:8000'
+const API = 'https://finsight-1-j99y.onrender.com'
 
 export function AppProvider({ children }) {
   const [transactions, setTransactions] = useState([])

@@ -21,7 +21,7 @@ export default function Simulator() {
   const [categoryData, setCategoryData] = useState([])
 
 useEffect(() => {
-  fetch('http://127.0.0.1:8000/dashboard/category-spending')
+  fetch('https://finsight-1-j99y.onrender.com/dashboard/category-spending')
     .then((res) => res.json())
     .then((data) => setCategoryData(data))
     .catch((error) => console.error('Category spending failed:', error))

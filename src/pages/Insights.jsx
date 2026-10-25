@@ -21,14 +21,14 @@ export default function Insights() {
   const [recurring, setRecurring] = useState([])
 
 useEffect(() => {
-  fetch('http://127.0.0.1:8000/ml/recurring')
+  fetch('https://finsight-1-j99y.onrender.com/ml/recurring')
     .then((res) => res.json())
     .then((data) => setRecurring(data))
     .catch((error) => console.error('Recurring detection failed:', error))
 }, [])
 
 useEffect(() => {
-  fetch('http://127.0.0.1:8000/ml/anomalies')
+  fetch('https://finsight-1-j99y.onrender.com/ml/anomalies')
     .then((res) => res.json())
     .then((data) => setMlAnomalies(data))
     .catch((error) => console.error('Anomaly detection failed:', error))
